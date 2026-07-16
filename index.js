@@ -1213,7 +1213,7 @@ function createBot() {
         ? config.server.version
         : false;
     bot = mineflayer.createBot({
-      username: config["bot-account"].username,
+      username: config["bot-account"].username.replace(/[^\x20-\x7E]/g, "").trim().slice(0, 16),
       password: config["bot-account"].password || undefined,
       auth: config["bot-account"].type,
       host: config.server.ip,

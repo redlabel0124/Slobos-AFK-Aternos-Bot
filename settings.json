@@ -1,14 +1,14 @@
 {
-  "name": "AFK Bot",
+  "name": "RedLabel",
   "bot-account": {
-    "username": "Slobot00",
+    "username": "Redzinho087",
     "password": "",
     "type": "offline"
   },
   "server": {
-    "ip": "slobtest1.aternos.me",
-    "port": 27586,
-    "version": "",
+    "ip": "hypixelpirata.aternos.me",
+    "port": 25931,
+    "version": "1.21.5",
     "try-creative": false
   },
   "position": {

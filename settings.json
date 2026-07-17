@@ -54,11 +54,12 @@
     }
   },
   "modules": {
-    "avoidMobs": true,
-    "combat": true,
-    "beds": false,
-    "chat": true,
-    "console-commands": true
+  "avoidMobs": true,
+  "combat": true,
+  "beds": false,
+  "chat": true,
+  "console-commands": true,
+  "gathering": true
   },
   "combat": {
     "attack-mobs": true,
@@ -69,8 +70,8 @@
     "place-night": false
   },
   "discord": {
-    "enabled": false,
-    "webhookUrl": "YOUR_DISCORD_WEBHOOK_URL_HERE",
+    "enabled": true,
+    "webhookUrl": "https://discord.com/api/webhooks/1527742590659592383/rjL6uchdDJcfv2U-5YpQ7fad2xihkss62-z8hMZSnbnp4e4zWEsx-Q3hQ9TlOZU_TgqT",
     "events": {
       "connect": true,
       "disconnect": true,

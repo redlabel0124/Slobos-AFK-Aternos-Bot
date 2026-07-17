@@ -4,6 +4,7 @@ const { addLog, getLogs } = require("./logger");
 const mineflayer = require("mineflayer");
 const { Movements, pathfinder, goals } = require("mineflayer-pathfinder");
 const { GoalBlock } = goals;
+const { gatheringModule } = require("./gathering");
 const config = require("./settings.json");
 const express = require("express");
 const http = require("http");

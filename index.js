@@ -1181,7 +1181,7 @@ function getReconnectDelay() {
     baseDelay * Math.pow(2, botState.reconnectAttempts),
     maxDelay,
   );
-  const jitter = Math.floor(Math.random() * 2000);
+  const jitter = Math.floor(Math.random() * 8000);
   return delay + jitter;
 }
 

@@ -1,13 +1,13 @@
 {
-  "name": "AFK Bot",
+  "name": "RedLabel",
   "bot-account": {
-    "username": "SystemRedLabel­­­­­­­­­­­",
+    "username": "SystemRedLabel",
     "password": "",
     "type": "offline"
   },
   "server": {
-    "ip": "hyepixel.aternos.me",
-    "port": 17900,
+    "ip": "hypixelpirata.aternos.me",
+    "port": 25931,
     "version": "1.21.5",
     "try-creative": false
   },
@@ -27,11 +27,11 @@
       "sneak": true
     },
     "chat-messages": {
-  "enabled": false,
-  "repeat": false,
-  "repeat-delay": 120,
-  "messages": []
-},
+      "enabled": false,
+      "repeat": false,
+      "repeat-delay": 120,
+      "messages": []
+    },
     "chat-log": true,
     "auto-reconnect": true,
     "auto-reconnect-delay": 10000,
@@ -54,14 +54,14 @@
     }
   },
   "modules": {
-  "avoidMobs": true,
-  "combat": true,
-  "beds": false,
-  "chat": true,
-  "console-commands": true,
-  "gathering": true
-  "autoArmor": true,
-  "cleanInventory": true
+    "avoidMobs": true,
+    "combat": true,
+    "beds": false,
+    "chat": true,
+    "console-commands": true,
+    "gathering": true,
+    "autoArmor": true,
+    "cleanInventory": true
   },
   "combat": {
     "attack-mobs": true,
@@ -72,8 +72,8 @@
     "place-night": false
   },
   "discord": {
-    "enabled": true,
-    "webhookUrl": "https://discord.com/api/webhooks/1527742590659592383/rjL6uchdDJcfv2U-5YpQ7fad2xihkss62-z8hMZSnbnp4e4zWEsx-Q3hQ9TlOZU_TgqT",
+    "enabled": false,
+    "webhookUrl": "YOUR_DISCORD_WEBHOOK_URL_HERE",
     "events": {
       "connect": true,
       "disconnect": true,

@@ -1,48 +1,47 @@
-# 🤖 Slobos & Mr. Juice Aternos 24/7 Hosting Bot
+# 🤖 Bot de Hospedagem 24/7 para Aternos
 
-A Minecraft bot that helps keep an Aternos server online 24/7 by automatically joining it using a Mineflayer-based bot. Perfect for SMPs or small multiplayer servers that shut down when no players are online.
-
----
-
-## ✨ Features
-*   ✅ **Auto-Connect**: Automatically joins your server.
-*   ✅ **Infinite Uptime**: Prevents AFK kicks and server shutdowns.
-*   ✅ **Smart Reconnect**: Automatically reconnects if the internet drops or server restarts.
-*   ✅ **Render-Ready**: Includes "Self-Ping" to run 24/7 for FREE on Render.com.
-*   ✅ **Plugin Support**: Compatible with Paper/Spigot/Bukkit (auto-auth included).
+Um bot de Minecraft que ajuda a manter um servidor Aternos online 24 horas por dia, 7 dias por semana, entrando automaticamente nele através de um bot baseado em Mineflayer. Perfeito para SMPs ou pequenos servidores multiplayer que desligam quando não há jogadores online.
 
 ---
 
-## 🛠️ Requirements
-*   **GitHub Account**
-*   **Aternos Server**
-*   **Render Account** (for 24/7 hosting)
-*   **Common Sense!** 🧠        
+## ✨ Recursos
+*   ✅ **Conexão Automática**: Entra automaticamente no seu servidor.
+*   ✅ **Tempo de Atividade Infinito**: Evita expulsões por inatividade (AFK) e desligamentos do servidor.
+*   ✅ **Reconexão Inteligente**: Reconecta automaticamente se a internet cair ou o servidor reiniciar.
+*   ✅ **Pronto para Render**: Inclui "Self-Ping" para rodar 24/7 gratuitamente no Render.com.
+*   ✅ **Suporte a Plugins**: Compatível com Paper/Spigot/Bukkit (autenticação automática inclusa).
 
 ---
 
-## 🚀 Setup Guide
-
-We have made setup super easy! Check out the guide below:
-
-[**Detailed Google Doc Guide**](https://docs.google.com/document/d/1Fl0dRzP6O30ehp5-QcaB11IobF8I1JJhKUipzCWiCYA/edit?tab=t.0).
-
----
-
-## ⚙️ Usage
-*   **Start**: Just turn on your Aternos server. The bot will join automatically.
-*   **Status**: Visit the Render URL to see a status dashboard.
-*   **Chat**: The bot logs chat to the console.
+## 🛠️ Requisitos
+*   **Conta no GitHub**
+*   **Servidor Aternos**
+*   **Conta no Render** (para hospedagem 24/7)
+*   **Bom senso!** 🧠
 
 ---
 
-## ⚠️ Disclaimer
-This project is not affiliated with Aternos, Mojang, or Microsoft. Use at your own risk. Misuse may violate platform terms of service. This bot does not bypass Aternos queue limits; it only keeps the server active once it is online.
+## 🚀 Guia de Configuração
+
+Tornamos a configuração super fácil! Confira o guia abaixo:
+
+[**Guia Detalhado no Google Docs**]().
 
 ---
 
-## ❤️ Credits
-*   **Slobos (Discord: sloboscc)** — Original creator & idea. (The GOAT 🐐)
-*   **Mr.Juice (Discord: Mr.Juice3046)** — Updates, Guide, & Maintenance.
+## ⚙️ Uso
+*   **Iniciar**: Basta ligar o seu servidor Aternos. O bot entrará automaticamente.
+*   **Status**: Acesse a URL do Render para ver um painel de status.
+*   **Chat**: O bot registra o chat no console.
 
-**License**: MIT License
+---
+
+## ⚠️ Aviso Legal
+Este projeto não é afiliado à Aternos, Mojang ou Microsoft. Use por sua conta e risco. O uso indevido pode violar os termos de serviço da plataforma. Este bot não ignora os limites de fila da Aternos; ele apenas mantém o servidor ativo depois que ele já está online.
+
+---
+
+## ❤️ Créditos
+*   **RedLabel (Discord: themaskfuck)** — Criador original e idealizador. (O Maior de Todos os Tempos 🐐)
+
+**Licença**: Licença MIT

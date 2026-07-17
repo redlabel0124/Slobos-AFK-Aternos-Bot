@@ -1613,7 +1613,6 @@ function initializeModules(bot, mcData, defaultMove) {
   }
 
   // ---------- CUSTOM MODULES ----------
-  // FIX: avoidMobs AND combatModule conflict - if combat is enabled, don't run avoidMobs at the same time
   if (config.modules.avoidMobs && !config.modules.combat) {
     avoidMobs(bot);
   }
@@ -1625,6 +1624,9 @@ function initializeModules(bot, mcData, defaultMove) {
   }
   if (config.modules.chat) {
     chatModule(bot);
+  }
+  if (config.modules.gathering) {
+    gatheringModule(bot, mcData, defaultMove, addLog, botState);
   }
 
   addLog("[Modules] All modules initialized!");

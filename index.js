@@ -4,7 +4,6 @@ const { addLog, getLogs } = require("./logger");
 const mineflayer = require("mineflayer");
 const { Movements, pathfinder, goals } = require("mineflayer-pathfinder");
 const { GoalBlock } = goals;
-const { gatheringModule } = require("./gathering");
 const config = require("./settings.json");
 const express = require("express");
 const http = require("http");
@@ -1181,6 +1180,7 @@ function getReconnectDelay() {
     baseDelay * Math.pow(2, botState.reconnectAttempts),
     maxDelay,
   );
+  // Jitter up to 8s so reconnect timing looks natural but stays within Aternos shutdown window
   const jitter = Math.floor(Math.random() * 8000);
   return delay + jitter;
 }
@@ -1213,8 +1213,13 @@ function createBot() {
       config.server.version && config.server.version.trim() !== ""
         ? config.server.version
         : false;
+    // Strip non-ASCII characters and enforce 16-char Minecraft username limit
+    const safeUsername = config["bot-account"].username
+      .replace(/[^\x20-\x7E]/g, "")
+      .trim()
+      .slice(0, 16);
     bot = mineflayer.createBot({
-      username: config["bot-account"].username.replace(/[^\x20-\x7E]/g, "").trim().slice(0, 16),
+      username: safeUsername,
       password: config["bot-account"].password || undefined,
       auth: config["bot-account"].type,
       host: config.server.ip,
@@ -1613,6 +1618,7 @@ function initializeModules(bot, mcData, defaultMove) {
   }
 
   // ---------- CUSTOM MODULES ----------
+  // FIX: avoidMobs AND combatModule conflict - if combat is enabled, don't run avoidMobs at the same time
   if (config.modules.avoidMobs && !config.modules.combat) {
     avoidMobs(bot);
   }
@@ -1628,6 +1634,12 @@ function initializeModules(bot, mcData, defaultMove) {
   if (config.modules.gathering) {
     gatheringModule(bot, mcData, defaultMove, addLog, botState);
   }
+  if (config.modules.autoArmor) {
+    autoArmorModule(bot, mcData, addLog, botState);
+  }
+  if (config.modules.cleanInventory) {
+    cleanInventoryModule(bot, mcData, addLog, botState);
+  }
 
   addLog("[Modules] All modules initialized!");
 }
@@ -1636,67 +1648,260 @@ function initializeModules(bot, mcData, defaultMove) {
 // MOVEMENT HELPERS
 // ============================================================
 function startCircleWalk(bot, defaultMove) {
-  const radius = config.movement["circle-walk"].radius;
-  let angle = 0;
-  let lastPathTime = 0;
+  // Natural wandering: walks to random nearby points with variable distances and pauses
+  const baseRadius = config.movement["circle-walk"].radius;
 
-  addInterval(() => {
+  function scheduleNextWalk() {
     if (!bot || !botState.connected) return;
-    const now = Date.now();
-    if (now - lastPathTime < 2000) return;
-    lastPathTime = now;
-    try {
-      const x = bot.entity.position.x + Math.cos(angle) * radius;
-      const z = bot.entity.position.z + Math.sin(angle) * radius;
-      bot.pathfinder.setMovements(defaultMove);
-      bot.pathfinder.setGoal(
-        new GoalBlock(
-          Math.floor(x),
-          Math.floor(bot.entity.position.y),
-          Math.floor(z),
-        ),
-      );
-      angle += Math.PI / 4;
-      botState.lastActivity = Date.now();
-    } catch (e) {
-      addLog("[CircleWalk] Error:", e.message);
-    }
-  }, config.movement["circle-walk"].speed);
+
+    // Random pause between walks (4s to 18s) — like a player thinking where to go
+    const pause = 4000 + Math.random() * 14000;
+
+    setTimeout(() => {
+      if (!bot || !botState.connected) return;
+
+      // 20% chance to just stand still and look around instead of walking
+      if (Math.random() < 0.2) {
+        addLog("[Walk] Idle pause...");
+        scheduleNextWalk();
+        return;
+      }
+
+      try {
+        // Random direction and variable distance (50% to 150% of base radius)
+        const angle = Math.random() * Math.PI * 2;
+        const dist = baseRadius * (0.5 + Math.random() * 1.5);
+        const x = bot.entity.position.x + Math.cos(angle) * dist;
+        const z = bot.entity.position.z + Math.sin(angle) * dist;
+
+        bot.pathfinder.setMovements(defaultMove);
+        bot.pathfinder.setGoal(
+          new GoalBlock(
+            Math.floor(x),
+            Math.floor(bot.entity.position.y),
+            Math.floor(z),
+          ),
+        );
+        botState.lastActivity = Date.now();
+      } catch (e) {
+        addLog("[Walk] Error:", e.message);
+      }
+
+      scheduleNextWalk();
+    }, pause);
+  }
+
+  scheduleNextWalk();
 }
 
 function startRandomJump(bot) {
-  addInterval(() => {
-    if (
-      !bot ||
-      !botState.connected ||
-      typeof bot.setControlState !== "function"
-    )
-      return;
-    try {
-      bot.setControlState("jump", true);
-      setTimeout(() => {
-        if (bot && typeof bot.setControlState === "function")
-          bot.setControlState("jump", false);
-      }, 300);
-      botState.lastActivity = Date.now();
-    } catch (e) {
-      addLog("[RandomJump] Error:", e.message);
-    }
-  }, config.movement["random-jump"].interval);
+  function scheduleNextJump() {
+    if (!bot || !botState.connected) return;
+
+    // Very irregular jump timing (15s to 90s) — players don't jump on a schedule
+    const delay = 15000 + Math.random() * 75000;
+
+    setTimeout(() => {
+      if (!bot || !botState.connected || typeof bot.setControlState !== "function") {
+        scheduleNextJump();
+        return;
+      }
+      try {
+        bot.setControlState("jump", true);
+        setTimeout(() => {
+          if (bot && typeof bot.setControlState === "function")
+            bot.setControlState("jump", false);
+        }, 150 + Math.random() * 100);
+        botState.lastActivity = Date.now();
+      } catch (e) {
+        addLog("[Jump] Error:", e.message);
+      }
+      scheduleNextJump();
+    }, delay);
+  }
+
+  scheduleNextJump();
 }
 
 function startLookAround(bot) {
-  addInterval(() => {
+  // Smooth gradual head movement instead of instant random snaps
+  function scheduleNextLook() {
     if (!bot || !botState.connected) return;
-    try {
-      const yaw = Math.random() * Math.PI * 2 - Math.PI;
-      const pitch = (Math.random() * Math.PI) / 2 - Math.PI / 4;
-      bot.look(yaw, pitch, false);
-      botState.lastActivity = Date.now();
-    } catch (e) {
-      addLog("[LookAround] Error:", e.message);
+
+    // Variable interval (3s to 12s)
+    const delay = 3000 + Math.random() * 9000;
+
+    setTimeout(() => {
+      if (!bot || !botState.connected) {
+        scheduleNextLook();
+        return;
+      }
+      try {
+        const currentYaw = bot.entity.yaw;
+        const currentPitch = bot.entity.pitch;
+
+        // Small incremental turns instead of full random snaps
+        const yawDelta = (Math.random() - 0.5) * (Math.PI / 2);
+        const pitchDelta = (Math.random() - 0.5) * 0.4;
+
+        const newYaw = currentYaw + yawDelta;
+        const newPitch = Math.max(-0.4, Math.min(0.4, currentPitch + pitchDelta));
+
+        bot.look(newYaw, newPitch, true);
+        botState.lastActivity = Date.now();
+      } catch (e) {
+        addLog("[Look] Error:", e.message);
+      }
+      scheduleNextLook();
+    }, delay);
+  }
+
+  scheduleNextLook();
+}
+
+// ============================================================
+// AUTO ARMOR MODULE
+// ============================================================
+function autoArmorModule(bot, mcData, addLog, botState) {
+  const ARMOR_SLOTS = {
+    head:  "head",
+    torso: "torso",
+    legs:  "legs",
+    feet:  "feet",
+  };
+
+  const ARMOR_ORDER = {
+    head:  ["netherite_helmet","diamond_helmet","iron_helmet","chainmail_helmet","golden_helmet","leather_helmet"],
+    torso: ["netherite_chestplate","diamond_chestplate","iron_chestplate","chainmail_chestplate","golden_chestplate","leather_chestplate"],
+    legs:  ["netherite_leggings","diamond_leggings","iron_leggings","chainmail_leggings","golden_leggings","leather_leggings"],
+    feet:  ["netherite_boots","diamond_boots","iron_boots","chainmail_boots","golden_boots","leather_boots"],
+  };
+
+  async function tryEquipArmor() {
+    if (!bot || !botState.connected) return;
+    for (const [slot, pieces] of Object.entries(ARMOR_ORDER)) {
+      const currentArmor = bot.inventory.slots[
+        slot === "head" ? 5 : slot === "torso" ? 6 : slot === "legs" ? 7 : 8
+      ];
+      const currentIdx = currentArmor ? pieces.indexOf(currentArmor.name) : 999;
+      for (const piece of pieces) {
+        const idx = pieces.indexOf(piece);
+        if (idx >= currentIdx) break; // already wearing equal or better
+        const item = bot.inventory.items().find(i => i.name === piece);
+        if (item) {
+          try {
+            await bot.equip(item, ARMOR_SLOTS[slot]);
+            addLog(`[Armor] Equipou ${piece}`);
+            await new Promise(r => setTimeout(r, 300));
+          } catch (e) { /* ignore */ }
+          break;
+        }
+      }
     }
-  }, config.movement["look-around"].interval);
+  }
+
+  // Check armor every 30 seconds
+  addInterval(() => { tryEquipArmor(); }, 30000);
+  // Also check shortly after spawn
+  setTimeout(() => { tryEquipArmor(); }, 5000);
+  addLog("[Armor] Módulo de auto-armadura ativado!");
+}
+
+// ============================================================
+// CLEAN INVENTORY MODULE
+// ============================================================
+function cleanInventoryModule(bot, mcData, addLog, botState) {
+  // Items considered junk — will be dropped when inventory is nearly full
+  const JUNK = [
+    "dirt","gravel","flint","sand","red_sand","cobblestone","andesite",
+    "diorite","granite","netherrack","soul_sand","soul_soil",
+    "rotten_flesh","spider_eye","bone","string","arrow",
+  ];
+
+  const INVENTORY_FULL_THRESHOLD = 32; // drop junk when more than 32 slots used
+
+  async function cleanUp() {
+    if (!bot || !botState.connected) return;
+
+    const items = bot.inventory.items();
+    if (items.length < INVENTORY_FULL_THRESHOLD) return;
+
+    addLog(`[Inv] Inventário cheio (${items.length} slots) — limpando itens inúteis...`);
+
+    for (const item of items) {
+      if (JUNK.includes(item.name)) {
+        try {
+          await bot.toss(item.type, null, item.count);
+          addLog(`[Inv] Descartou ${item.count}x ${item.name}`);
+          await new Promise(r => setTimeout(r, 400 + Math.random() * 300));
+        } catch (e) { /* ignore */ }
+      }
+    }
+  }
+
+  // Check every 2 minutes
+  addInterval(() => { cleanUp(); }, 120000);
+  addLog("[Inv] Módulo de limpeza de inventário ativado!");
+}
+
+// ============================================================
+// GATHERING MODULE (inline)
+// ============================================================
+function gatheringModule(bot, mcData, defaultMove, addLog, botState) {
+  const { GoalNear } = goals;
+  const WOOD = ["oak_log","birch_log","spruce_log","jungle_log","acacia_log","dark_oak_log","mangrove_log","cherry_log"];
+  const MINE = ["coal_ore","iron_ore","deepslate_coal_ore","deepslate_iron_ore","stone"];
+  let busy = false;
+
+  async function chopTree() {
+    if (!bot || !botState.connected || busy) return;
+    const log = bot.findBlock({ matching: WOOD.map(n => mcData.blocksByName[n]?.id).filter(Boolean), maxDistance: 24 });
+    if (!log) { addLog("[Gather] Sem madeira perto."); return; }
+    busy = true;
+    addLog("[Gather] Indo cortar madeira...");
+    try {
+      await bot.pathfinder.goto(new GoalNear(log.position.x, log.position.y, log.position.z, 2));
+      if (!bot || !botState.connected) { busy = false; return; }
+      let pos = log.position.clone();
+      for (let i = 0; i < 4; i++) {
+        const block = bot.blockAt(pos);
+        if (!block || !WOOD.includes(block.name)) break;
+        await bot.dig(block);
+        await new Promise(r => setTimeout(r, 300 + Math.random() * 400));
+        pos = pos.offset(0, 1, 0);
+      }
+      addLog("[Gather] Madeira coletada!");
+    } catch (e) { addLog("[Gather] Erro madeira: " + e.message); }
+    busy = false;
+  }
+
+  async function mineBlock() {
+    if (!bot || !botState.connected || busy) return;
+    const block = bot.findBlock({ matching: MINE.map(n => mcData.blocksByName[n]?.id).filter(Boolean), maxDistance: 16 });
+    if (!block) { addLog("[Gather] Sem bloco perto."); return; }
+    busy = true;
+    addLog("[Gather] Minerando " + block.name + "...");
+    try {
+      await bot.pathfinder.goto(new GoalNear(block.position.x, block.position.y, block.position.z, 2));
+      if (!bot || !botState.connected) { busy = false; return; }
+      await bot.dig(block);
+      await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
+      addLog("[Gather] " + block.name + " coletado!");
+    } catch (e) { addLog("[Gather] Erro mineração: " + e.message); }
+    busy = false;
+  }
+
+  function next() {
+    if (!bot || !botState.connected) return;
+    setTimeout(async () => {
+      if (!bot || !botState.connected) { next(); return; }
+      if (Math.random() < 0.6) await chopTree(); else await mineBlock();
+      next();
+    }, 30000 + Math.random() * 150000);
+  }
+
+  setTimeout(next, 20000 + Math.random() * 40000);
+  addLog("[Gather] Módulo de coleta ativado!");
 }
 
 // ============================================================

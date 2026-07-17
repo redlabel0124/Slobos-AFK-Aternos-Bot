@@ -60,6 +60,8 @@
   "chat": true,
   "console-commands": true,
   "gathering": true
+  "autoArmor": true,
+  "cleanInventory": true
   },
   "combat": {
     "attack-mobs": true,

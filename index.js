@@ -2019,43 +2019,64 @@ function combatModule(bot, mcData) {
 }
 
 // Bed module
-// FIX: bot.isSleeping can be stale; use a local isTryingToSleep guard to prevent double-sleep errors
-// FIX: place-night was false in default settings - documentation note added
 function bedModule(bot, mcData) {
-  let isTryingToSleep = false;
+  const { GoalNear } = goals;
+  let isSleeping = false;
 
   addInterval(async () => {
-    if (!bot || !botState.connected) return;
-    if (!config.beds["place-night"]) return; // FIX: check flag (was always skipping before)
+    if (!bot || !botState.connected || isSleeping) return;
 
     try {
-      const isNight =
-        bot.time.timeOfDay >= 12500 && bot.time.timeOfDay <= 23500;
+      const timeOfDay = bot.time.timeOfDay;
+      const isNight = timeOfDay >= 12500 && timeOfDay <= 23500;
 
-      // FIX: use local guard instead of stale bot.isSleeping
-      if (isNight && !isTryingToSleep) {
-        const bedBlock = bot.findBlock({
-          matching: (block) => block.name.includes("bed"),
-          maxDistance: 8,
-        });
+      if (!isNight) return;
 
-        if (bedBlock) {
-          isTryingToSleep = true;
-          try {
-            await bot.sleep(bedBlock);
-            addLog("[Bed] Sleeping...");
-          } catch (e) {
-            // Can't sleep - maybe not night enough or monsters nearby
-          } finally {
-            isTryingToSleep = false;
-          }
-        }
+      // Find nearest bed in a generous radius
+      const bedBlock = bot.findBlock({
+        matching: (block) => block.name.endsWith("_bed"),
+        maxDistance: 32,
+      });
+
+      if (!bedBlock) {
+        addLog("[Bed] Noite, mas nenhuma cama encontrada.");
+        return;
       }
+
+      isSleeping = true;
+      addLog("[Bed] Indo dormir...");
+
+      // Walk to the bed first
+      try {
+        await bot.pathfinder.goto(
+          new GoalNear(bedBlock.position.x, bedBlock.position.y, bedBlock.position.z, 2)
+        );
+      } catch (e) { /* couldn't path, try anyway */ }
+
+      if (!bot || !botState.connected) { isSleeping = false; return; }
+
+      // Small pause before sleeping (looks human)
+      await new Promise(r => setTimeout(r, 500 + Math.random() * 800));
+
+      try {
+        await bot.sleep(bedBlock);
+        addLog("[Bed] Dormindo! Boa noite 💤");
+      } catch (e) {
+        addLog("[Bed] Não conseguiu dormir: " + e.message);
+      }
+
     } catch (e) {
-      isTryingToSleep = false;
-      addLog("[Bed] Error:", e.message);
+      addLog("[Bed] Erro: " + e.message);
+    } finally {
+      isSleeping = false;
     }
   }, 10000);
+
+  // Wake up when morning arrives
+  bot.on("wake", () => {
+    isSleeping = false;
+    addLog("[Bed] Acordou! Bom dia ☀️");
+  });
 }
 
 // Chat module

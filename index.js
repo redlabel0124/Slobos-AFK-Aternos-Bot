@@ -1226,7 +1226,7 @@ function createBot() {
       port: config.server.port,
       version: botVersion,
       hideErrors: false,
-      checkTimeoutInterval: 600000,
+      checkTimeoutInterval: 30000,
     });
 
     bot.loadPlugin(pathfinder);
@@ -1491,15 +1491,30 @@ function initializeModules(bot, mcData, defaultMove) {
 
   // ---------- ANTI-AFK ----------
   if (config.utils["anti-afk"] && config.utils["anti-afk"].enabled) {
-    // Arm swinging
+    // Arm swinging - frequent to keep connection alive
     addInterval(
       () => {
         if (!bot || !botState.connected) return;
         try {
           bot.swingArm();
+          botState.lastActivity = Date.now();
         } catch (e) {}
       },
-      10000 + Math.floor(Math.random() * 50000),
+      3000 + Math.floor(Math.random() * 4000),
+    );
+
+    // Keep-alive: send look packet every 5s to avoid server idle detection
+    addInterval(
+      () => {
+        if (!bot || !botState.connected) return;
+        try {
+          const yaw = bot.entity.yaw + (Math.random() - 0.5) * 0.3;
+          const pitch = (Math.random() - 0.5) * 0.2;
+          bot.look(yaw, pitch, false);
+          botState.lastActivity = Date.now();
+        } catch (e) {}
+      },
+      5000,
     );
 
     // Hotbar cycling

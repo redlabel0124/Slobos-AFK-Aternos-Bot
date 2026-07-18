@@ -1226,7 +1226,7 @@ function createBot() {
       port: config.server.port,
       version: botVersion,
       hideErrors: false,
-      checkTimeoutInterval: 30000,
+      checkTimeoutInterval: 120000,
     });
 
     bot.loadPlugin(pathfinder);

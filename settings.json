@@ -27,20 +27,15 @@
       "sneak": true
     },
     "chat-messages": {
-      "enabled": true,
-      "repeat": true,
-      "repeat-delay": 300,
-      "messages": [
-        ".",
-        "oi",
-        "alguem ai?",
-        "tô aqui"
-      ]
+      "enabled": false,
+      "repeat": false,
+      "repeat-delay": 120,
+      "messages": []
     },
     "chat-log": true,
     "auto-reconnect": true,
-    "auto-reconnect-delay": 5000,
-    "max-reconnect-delay": 30000
+    "auto-reconnect-delay": 10000,
+    "max-reconnect-delay": 60000
   },
   "movement": {
     "enabled": true,

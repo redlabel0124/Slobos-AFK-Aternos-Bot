@@ -6,8 +6,8 @@
     "type": "offline"
   },
   "server": {
-    "ip": "hyepixel.exaroton.me",
-    "port": 42846,
+    "ip": "hyepixel.aternos.me",
+    "port": 17900,
     "version": "1.21.5",
     "try-creative": false
   },
